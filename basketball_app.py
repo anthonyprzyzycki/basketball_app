@@ -1,9 +1,12 @@
-#from torch.distributions import Normal
+from torch.distributions import Normal
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import streamlit as st
+
+
 
 
 class ShootingNetwork(nn.Module):
@@ -96,5 +99,3 @@ plt.ylim(-5,0)
 plt.xlabel("Episode")
 plt.ylabel("Average Reward")
 plt.title("Training Performance")
-
-print("hello") 
