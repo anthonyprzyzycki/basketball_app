@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import streamlit as st
+import matplotlib.pyplot as plt
+import tqdm
 
 
 
@@ -70,7 +72,7 @@ def simulate_shot(x, v, alpha):
         vv -= 9.8 * dt
     distance=np.abs(z-3.05)
     return -0.5*distance
-import tqdm
+
 def train(agent, episodes=2000):
     reward_list=[]
     for itrain in tqdm.tqdm(range(episodes)):
@@ -92,7 +94,7 @@ if __name__ == "__main__":
     agent = REINFORCE()
     reward_L,last_reward_L,action_L,x_pos_in=train(agent)
 
-import matplotlib.pyplot as plt
+
 plt.plot(reward_L)
 plt.ylim(-5,0)
 plt.xlabel("Episode")
