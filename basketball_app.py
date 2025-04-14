@@ -76,7 +76,7 @@ def simulate_shot(x, v, alpha):
 def train(agent, episodes=2000):
     reward_list=[]
     for itrain in tqdm.tqdm(range(episodes)):
-        x_pos = np.random.randn()*5+15  # Initial player position
+        x_pos =  st.slider("Enter the initial x position", -5, 5, 1)#x_pos = np.random.randn()*5+15  # Initial player position
         state = np.array([(x_pos-15)/5])
         action_type, action_L, x_pos = agent.select_action(state)
         x_pos_in = x_pos*5+15
