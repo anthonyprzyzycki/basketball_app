@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import streamlit as st
 import matplotlib.pyplot as plt
 import tqdm
+import uuid 
 
 
 
@@ -73,10 +74,10 @@ def simulate_shot(x, v, alpha):
     distance=np.abs(z-3.05)
     return -0.5*distance
 
-def train(agent, episodes=2000):
+def train(agent, x_slider_val, episodes=2000):
     reward_list=[]
     for itrain in tqdm.tqdm(range(episodes)):
-        x_pos =  st.slider("Enter the initial x position", -5, 5, 1, key="initial_x_pos")#x_pos = np.random.randn()*5+15  # Initial player position
+        x_pos = x_slider_val
         state = np.array([(x_pos-15)/5])
         action_type, action_L, x_pos = agent.select_action(state)
         x_pos_in = x_pos*5+15
@@ -86,17 +87,48 @@ def train(agent, episodes=2000):
             agent.rewards.append(reward)
             last_reward_L.append(reward)
         reward_list.append(np.array(agent.rewards).mean())
-
         agent.update_policy()
+
     return reward_list,last_reward_L,action_L, x_pos_in
 
-if __name__ == "__main__":
+
+def main():
+    st.title("Basketball Shot Training Simulator 🏀")
+
     agent = REINFORCE()
-    reward_L,last_reward_L,action_L,x_pos_in=train(agent)
 
+    # Store slider value
+    x_slider_val = st.slider("Enter the initial X position", -5, 5, 1, key="x_slider")
 
-plt.plot(reward_L)
-plt.ylim(-5,0)
-plt.xlabel("Episode")
-plt.ylabel("Average Reward")
-plt.title("Training Performance")
+    # Button click triggers training once
+    if st.button("Start Training"):
+        reward_L, last_reward_L, action_L, x_pos_in = train(agent, x_slider_val)
+
+        # Save to session state
+        st.session_state.reward_L = reward_L
+        st.session_state.last_reward_L = last_reward_L
+        st.session_state.action_L = action_L
+        st.session_state.x_pos_in = x_pos_in
+
+    # Show results if available
+    if "reward_L" in st.session_state:
+        fig, ax = plt.subplots()
+        ax.plot(st.session_state.reward_L)
+        ax.set_ylim(-5, 0)
+        ax.set_xlabel("Episode")
+        ax.set_ylabel("Average Reward")
+        ax.set_title("Training Performance")
+        st.pyplot(fig)
+
+        st.write("Final X position:", st.session_state.x_pos_in)
+        st.write("Last rewards:", st.session_state.last_reward_L[:5])
+        st.write("Sample actions:", st.session_state.action_L[:5])
+
+if __name__ == "__main__": 
+    main()
+
+#plt.plot(reward_L)
+#plt.ylim(-5,0)
+#plt.xlabel("Episode")
+#plt.ylabel("Average Reward")
+#plt.title("Training Performance")
