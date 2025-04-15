@@ -1,9 +1,14 @@
-#from torch.distributions import Normal
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import streamlit as st
+import matplotlib.pyplot as plt
+import tqdm
+import uuid 
+
+
 
 
 class ShootingNetwork(nn.Module):
@@ -56,7 +61,7 @@ class REINFORCE():
         self.log_probs = []
         self.rewards = []
 
-def simulate_shot(x, v, alpha):
+def simulate_shot(x, v, alpha, reward_mode = "distance", eps=1e-4):
     z = 1.8  # Initial height
     dt = 0.01
     vh = v * np.cos(alpha)
@@ -66,35 +71,75 @@ def simulate_shot(x, v, alpha):
         x += vh * dt
         z += vv * dt
         vv -= 9.8 * dt
+
     distance=np.abs(z-3.05)
-    return -0.5*distance
-import tqdm
-def train(agent, episodes=2000):
+
+    if reward_mode == "distance":
+        return -0.5*distance
+    elif reward_mode == "inverse": 
+        return 1 / (eps + distance*2)
+    else:
+        return -distance
+
+def train(agent, x_slider_val, reward_mode, episodes=2000):
     reward_list=[]
     for itrain in tqdm.tqdm(range(episodes)):
-        x_pos = np.random.randn()*5+15  # Initial player position
+        x_pos = x_slider_val
         state = np.array([(x_pos-15)/5])
         action_type, action_L, x_pos = agent.select_action(state)
         x_pos_in = x_pos*5+15
         last_reward_L=[]
+        
         for action in action_L:
-            reward = simulate_shot(x_pos_in, action[0], action[1])
+            reward = simulate_shot(x_pos_in, action[0], action[1], reward_mode= reward_mode)
             agent.rewards.append(reward)
             last_reward_L.append(reward)
         reward_list.append(np.array(agent.rewards).mean())
-
         agent.update_policy()
+
     return reward_list,last_reward_L,action_L, x_pos_in
 
-if __name__ == "__main__":
-    agent = REINFORCE()
-    reward_L,last_reward_L,action_L,x_pos_in=train(agent)
 
-import matplotlib.pyplot as plt
-plt.plot(reward_L)
-plt.ylim(-5,0)
-plt.xlabel("Episode")
-plt.ylabel("Average Reward")
-plt.title("Training Performance")
+def main():
+    st.title("Basketball Shot Training Simulator 🏀")
 
-print("hello") 
+    x_slider_val = st.slider("Enter the initial X position", -5, 5, 1, key="x_slider_unique")
+
+    gamma = st.slider("Gamma (Discount Factor)", 0.8, 0.999, 0.97, step = .001)
+    lr = st.slider("Learning Rate", 0.0001, .02, .005, step = .0001)
+
+    reward_mode = st.selectbox("Select Reward Function", options = ["distance", "inverse"], 
+                               format_func=lambda x: "-0.5*distance" if x =="distance" else "1 / (eps + error*2)")
+    
+
+    agent = REINFORCE(lr=lr, gamma=gamma)
+
+    if st.button("Start Training"):
+        reward_L, last_reward_L, action_L, x_pos_in = train(agent, x_slider_val, reward_mode)
+        
+        # save to session state
+        st.session_state.reward_L = reward_L
+        st.session_state.last_reward_L = last_reward_L
+        st.session_state.action_L = action_L
+        st.session_state.x_pos_in = x_pos_in
+
+    # show results
+    if "reward_L" in st.session_state:
+        fig, ax = plt.subplots()
+        ax.plot(st.session_state.reward_L)
+        ax.set_ylim(-5, 0)
+        ax.set_xlabel("Episode")
+        ax.set_ylabel("Average Reward")
+        ax.set_title("Training Performance")
+        st.pyplot(fig)
+
+        st.write("Final X position:", st.session_state.x_pos_in)
+
+if __name__ == "__main__": 
+    main()
+
+#plt.plot(reward_L)
+#plt.ylim(-5,0)
+#plt.xlabel("Episode")
+#plt.ylabel("Average Reward")
+#plt.title("Training Performance")
