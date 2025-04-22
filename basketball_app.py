@@ -78,8 +78,25 @@ def simulate_shot(x, v, alpha, reward_mode = "distance", eps=1e-4):
         return -0.5*distance
     elif reward_mode == "inverse": 
         return 1 / (eps + distance*2)
+    elif reward_mode == "sparse":
+        return 1.0 if distance <= 0.15 else 0.0
     else:
         return -distance
+    
+def simulate_trajectory(x, v, alpha, dt=0.01):
+    z=1.8
+    vh = v * np.cos(alpha)
+    vv = v * np.sin(alpha)
+    traj_x=[]
+    traj_z=[]
+
+    while x<30 and z>= 0: 
+        traj_x.append(x)
+        traj_z.append(z)
+        x+= vh+dt
+        z+= vv*dt
+        vv-=9.8*dt
+    return traj_x, traj_z
 
 def train(agent, x_slider_val, reward_mode, episodes=2000):
     reward_list=[]
@@ -103,14 +120,21 @@ def train(agent, x_slider_val, reward_mode, episodes=2000):
 def main():
     st.title("Basketball Shot Training Simulator 🏀")
 
-    x_slider_val = st.slider("Enter the initial X position", -5, 5, 1, key="x_slider_unique")
-
+    st.markdown("Gamma (Discount Factor) controls how much future rewards are valued compared to immediate rewards.")
     gamma = st.slider("Gamma (Discount Factor)", 0.8, 0.999, 0.97, step = .001)
+
+    st.markdown("Learning Rate determines how quickly the model updates based on new experiences.")
     lr = st.slider("Learning Rate", 0.0001, .02, .005, step = .0001)
 
-    reward_mode = st.selectbox("Select Reward Function", options = ["distance", "inverse"], 
-                               format_func=lambda x: "-0.5*distance" if x =="distance" else "1 / (eps + error*2)")
-    
+    st.markdown("**Reward Function** defines how the agent is scored for its shot — use distance-based, inverse distance, or sparse (hit/miss) logic.")
+    reward_mode = st.selectbox("Select Reward Function", 
+                               options=["distance", "inverse", "sparse"],
+                               format_func=lambda x: {
+                                   "distance": "-0.5 * distance",
+                                   "inverse": "1 / (eps + distance * 2)",
+                                   "sparse": "1 if close, else 0"
+                               }[x])
+    x_slider_val = st.slider("Enter the initial X position", -5, 5, 1, key="x_slider_unique")
 
     agent = REINFORCE(lr=lr, gamma=gamma)
 
@@ -127,13 +151,32 @@ def main():
     if "reward_L" in st.session_state:
         fig, ax = plt.subplots()
         ax.plot(st.session_state.reward_L)
-        ax.set_ylim(-5, 0)
+        ax.set_ylim(-5, 1.2)
         ax.set_xlabel("Episode")
         ax.set_ylabel("Average Reward")
         ax.set_title("Training Performance")
         st.pyplot(fig)
 
         st.write("Final X position:", st.session_state.x_pos_in)
+
+        # shot trajectories
+        st.subheader("Shot trajectories")
+        fig2, ax2=plt.subplots()
+        for shot in st.session_state.action_L:
+            traj_x, traj_z = simulate_trajectory(st.session_state.x_pos_in, shot[0], shot[1])
+            ax2.plot(traj_x, traj_z, alpha=0.4)
+        
+        hoop_y = 3.05
+        ax2.hlines(hoop_y, xmin=29.7, xmax=30.3, colors='orange', linestyles='solid', linewidth=3, label="Hoop")
+
+        ax2.set_xlim(15, 32)
+        ax2.set_ylim(0, 5)
+        ax2.set_xlabel("X Position (m)")
+        ax2.set_ylabel("Height (z)")
+        ax2.set_title("Shot Trajectories")
+        st.pyplot(fig2)
+
+
 
 if __name__ == "__main__": 
     main()
