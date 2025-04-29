@@ -95,7 +95,7 @@ def plot_agent_pos(x_slider_val):
     # Plot the agent
     ax.plot(x_pos_in, 1.8, 'o', markersize=12, label="Agent", color="blue")
 
-    ax.set_xlim(-30, 32)
+    ax.set_xlim(-30, 40)
     ax.set_ylim(0, 5)
     ax.set_xlabel("Court X Position (meters)")
     ax.set_ylabel("Height (meters)")
