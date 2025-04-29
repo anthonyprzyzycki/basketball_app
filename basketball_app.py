@@ -150,7 +150,7 @@ def main():
     agent = REINFORCE(lr=lr, gamma=gamma)
 
     if st.button("Start Training"):
-        reward_L, last_reward_L, action_L, x_pos_in = train(agent, x_slider_val, reward_mode)
+        reward_L, last_reward_L, action_L, x_pos_in = train(agent, x_slider_val, reward_mode, ep_slider_val)
         
         # save to session state
         st.session_state.reward_L = reward_L
