@@ -107,7 +107,7 @@ def plot_agent_pos(x_slider_val):
 
 def train(agent, x_slider_val, reward_mode, ep_slider_val):
     reward_list=[]
-    for itrain in tqdm.tqdm(range(episodes=ep_slider_val)):
+    for itrain in tqdm.tqdm(range(ep_slider_val)):
         x_pos = x_slider_val
         state = np.array([(x_pos-15)/5])
         action_type, action_L, x_pos = agent.select_action(state)
