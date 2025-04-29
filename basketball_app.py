@@ -105,9 +105,9 @@ def plot_agent_pos(x_slider_val):
     return fig
 
 
-def train(agent, x_slider_val, reward_mode, episodes=2000):
+def train(agent, x_slider_val, reward_mode, ep_slider_val):
     reward_list=[]
-    for itrain in tqdm.tqdm(range(episodes)):
+    for itrain in tqdm.tqdm(range(episodes=ep_slider_val)):
         x_pos = x_slider_val
         state = np.array([(x_pos-15)/5])
         action_type, action_L, x_pos = agent.select_action(state)
@@ -125,15 +125,12 @@ def train(agent, x_slider_val, reward_mode, episodes=2000):
 
 
 def main():
-    st.title("Basketball Shot Training Simulator 🏀")
+    st.title("Basketball Simulator 🏀")
 
-    st.markdown("Gamma (controls how much future rewards are valued compared to immediate rewards).")
     gamma = st.slider("Gamma", 0.8, 0.999, 0.97, step = .001)
 
-    st.markdown("Learning Rate (determines how quickly the model updates based on new experiences).")
     lr = st.slider("Learning Rate", 0.0001, .02, .005, step = .0001)
 
-    st.markdown("Reward Function (defines how the agent is penalized or rewarded for its shot attempt).")
     reward_mode = st.selectbox("Select Reward Function", 
                                options=["distance", "inverse", "sparse"],
                                format_func=lambda x: {
@@ -141,10 +138,11 @@ def main():
                                    "inverse": "1 / (eps + distance * 2) (hybrid)",
                                    "sparse": "1 for a make, -1 for a miss  (sparse)"
                                }[x])
-    st.markdown("Select where you want the agent to shoot from (relative to the hoop at 30 meters).")
 
 # Slider to choose shooting position
-    x_slider_val = st.slider("X Position (centered at midcourt = 0)", -5, 5, 1, key="x_slider_unique")
+    x_slider_val = st.slider("X Position", -5, 5, 1, key="x_slider_unique")
+
+    ep_slider_val = st.slider("Number of Training Episodes", 500, 3000, 50, key = "ep_slider_unique")
 
 # Show visualization
     st.pyplot(plot_agent_pos(x_slider_val))
@@ -174,9 +172,3 @@ def main():
 
 if __name__ == "__main__": 
     main()
-
-#plt.plot(reward_L)
-#plt.ylim(-5,0)
-#plt.xlabel("Episode")
-#plt.ylabel("Average Reward")
-#plt.title("Training Performance")
