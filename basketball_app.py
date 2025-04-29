@@ -82,6 +82,28 @@ def simulate_shot(x, v, alpha, reward_mode = "distance", eps=1e-4):
         return 1 if distance <= 0.15 else -1
     else:
         return -distance
+    
+
+def plot_agent_pos(x_slider_val):
+    fig, ax = plt.subplots(figsize=(8,4))
+    hoop_x=30
+    hoop_z=3.05
+    ax.plot([hoop_x-0.3, hoop_x+0.3], [hoop_z, hoop_z], color="orange", linewidth=5, label="Hoop")
+
+    x_pos_in = (x_slider_val * 5) + 15
+
+    # Plot the agent
+    ax.plot(x_pos_in, 1.8, 'o', markersize=12, label="Agent", color="blue")
+
+    ax.set_xlim(10, 32)
+    ax.set_ylim(0, 5)
+    ax.set_xlabel("Court X Position (meters)")
+    ax.set_ylabel("Height (meters)")
+    ax.set_title("Shooting Position Visualization")
+    ax.legend()
+    ax.grid(True)
+    return fig
+
 
 def train(agent, x_slider_val, reward_mode, episodes=2000):
     reward_list=[]
@@ -119,7 +141,13 @@ def main():
                                    "inverse": "1 / (eps + distance * 2) (hybrid)",
                                    "sparse": "1 for a make, -1 for a miss  (sparse)"
                                }[x])
-    x_slider_val = st.slider("Enter the initial X position that the agent will shoot from.", -5, 5, 1, key="x_slider_unique")
+    st.markdown("Select where you want the agent to shoot from (relative to the hoop at 30 meters).")
+
+# Slider to choose shooting position
+    x_slider_val = st.slider("X Position (centered at midcourt = 0)", -5, 5, 1, key="x_slider_unique")
+
+# Show visualization
+    st.pyplot(plot_agent_pos(x_slider_val))
 
     agent = REINFORCE(lr=lr, gamma=gamma)
 
