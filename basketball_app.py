@@ -139,10 +139,9 @@ def main():
                                    "sparse": "1 for a make, -1 for a miss  (sparse)"
                                }[x])
 
-# Slider to choose shooting position
-    x_slider_val = st.slider("X Position", -5, 5, 1, key="x_slider_unique")
-
     ep_slider_val = st.slider("Number of Training Episodes", 500, 3000, step = 50, key = "ep_slider_unique")
+    
+    x_slider_val = st.slider("X Position", -5, 5, 1, key="x_slider_unique")
 
 # Show visualization
     st.pyplot(plot_agent_pos(x_slider_val))
